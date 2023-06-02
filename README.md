@@ -1,1 +1,1 @@
-# edu_plan
+# Welcome and have fun
