@@ -205,18 +205,31 @@ bool IsArranged(list<course*> arrangedList, list<course*> testTarget)
 course* GetNextAddable(list<course*> arrangedList, map<string, course*> courseMap)
 {
     course* result = NULL;
-    for (auto const& [key, val] : courseMap)
+
+    for (auto const& x : courseMap)
     {
-        bool arranged = (std::find(arrangedList.begin(), arrangedList.end(), val) != arrangedList.end());
-        if(!arranged)
-        {
-            if(IsArranged(arrangedList, val->getPre()))
+            bool arranged = (std::find(arrangedList.begin(), arrangedList.end(), x.second) != arrangedList.end());
+            if(!arranged)
             {
-                result = val;
-                break;
+                if(IsArranged(arrangedList, x.second->getPre()))
+                {
+                    result = x.second;
+                    break;
+                }
             }
-        }
     }
+    // for (auto const& [key, val] : courseMap)
+    // {
+    //     bool arranged = (std::find(arrangedList.begin(), arrangedList.end(), val) != arrangedList.end());
+    //     if(!arranged)
+    //     {
+    //         if(IsArranged(arrangedList, val->getPre()))
+    //         {
+    //             result = val;
+    //             break;
+    //         }
+    //     }
+    // }
     return result;
 }
 
