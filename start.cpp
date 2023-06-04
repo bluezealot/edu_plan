@@ -61,6 +61,13 @@ class course
         return predecessors;
     }
 
+
+    void print(string format)
+    {
+        cout << format;
+        cout << "Course number: " << identity << " points: " << points << endl;
+    }
+
 };
 
 class term
@@ -70,10 +77,12 @@ class term
     int points;
     int point_limit;
     int avg_course_count;
+    int term_no;
 
     public:
-    term(int param_plimit, int param_acc)
+    term(int pterm_no, int param_plimit, int param_acc)
     {
+        term_no = pterm_no;
         points = 0;
         point_limit = param_plimit;
         avg_course_count = param_acc;
@@ -89,10 +98,23 @@ class term
 
     bool add_course(course* one)
     {
-        //TODO add the false condition
-        courses.push_back(one);
-        points += one->get_points();
-        return true;
+        if((points + one->get_points()) < point_limit)
+        {
+            if(avg_course_count == -1 || courses.size() < avg_course_count)
+            {
+                courses.push_back(one);
+                points += one->get_points();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
     }
 
     int sum_points()
@@ -104,26 +126,55 @@ class term
         }
         return ret;
     }
+
+    void print()
+    {
+        cout << "term: " << term_no << endl;
+        for(course* acourse : courses)
+        {
+            acourse->print("  ");
+        }
+    }
 };
 
 class plan
 {
     private:
-    list<term*> terms;
+    list<term*>* terms;
 
     public:
+    plan()
+    {
+        terms = new list<term*>();
+    }
     void add_term(term* one)
     {
-        terms.push_back(one);
+        terms->push_back(one);
     }
 
-    list<term*> GetTerms()
+    list<term*>* GetTerms()
     {
         return terms;
     }
+    ~plan()
+    {
+        for(term* aterm : *terms)
+        {
+            delete aterm;
+        }
+        delete terms;
+    }
 
-    //TODO print out the plan.
+    void print()
+    {
+        cout << "Planed courses:" << endl;
+        for(term* aterm : *terms)
+        {
+            aterm->print();
+        }
+    }
 };
+
 
 // for string delimiter
 std::vector<std::string> split(std::string s, std::string delimiter) {
@@ -139,75 +190,6 @@ std::vector<std::string> split(std::string s, std::string delimiter) {
 
     res.push_back (s.substr (pos_start));
     return res;
-}
-
-bool doplan(int term_count, int max_point, int mode, map<string, course*> courseMap)
-{
-    plan p;
-    for(int i = 0; i < term_count; i ++)
-    {
-        int acc = 0;
-        if(mode == 2)
-        {
-            acc = -1;
-        }
-        else
-        {
-            acc = courseMap.size()/term_count;
-        }
-        term* tm = new term(max_point, acc);
-        p.add_term(tm);
-    }
-    list<course*> arrangedList;
-
-    course* target = GetNextAddable(arrangedList, courseMap);
-    list<term*>::iterator it = p.GetTerms().begin();
-
-    while(target != NULL)//All courses are arranged or some situation can't be fulfilled will terminate the loop
-    {
-        if(arrangeCourse(target, p.GetTerms(), it))
-        {
-            arrangedList.push_back(target);
-            target = GetNextAddable(arrangedList, courseMap);
-        }
-        else
-        {
-            cout << "A course can't be added, course:" << target->get_id() << endl;
-            return false;
-        }
-    }
-    if(arrangedList.size() != courseMap.size())
-    {
-        cout << "Some courses can't be arranged, detai:" << endl;
-        //TODO print out every thing. 
-        return false;
-    }
-    else
-    {
-        // TODO print out the plan
-    }
-    return true;
-}
-
-bool arrangeCourse(course* aCourse, list<term*> terms, list<term*>::iterator it)
-{
-    term* currentTerm = *it;
-    if(!currentTerm->add_course(aCourse))
-    {
-        it ++;
-        if(it != terms.end())
-        {
-            return arrangeCourse(aCourse, terms, it);
-        }
-        else
-        {
-            return false;
-        }
-    }
-    else
-    {
-        return true;
-    }
 }
 
 bool IsArranged(list<course*> arrangedList, list<course*> testTarget)
@@ -236,6 +218,82 @@ course* GetNextAddable(list<course*> arrangedList, map<string, course*> courseMa
         }
     }
     return result;
+}
+
+bool arrangeCourse(course* aCourse, list<term*>::iterator end, list<term*>::iterator it)
+{
+    term* currentTerm = *it;
+    if(!currentTerm->add_course(aCourse))
+    {
+        it ++;
+        if(it != end)
+        {
+            return arrangeCourse(aCourse, end, it);
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return true;
+    }
+}
+
+bool doplan(int term_count, int max_point, int mode, map<string, course*> courseMap)
+{
+    plan* p = new plan();
+    for(int i = 0; i < term_count; i ++)
+    {
+        int acc = 0;
+        if(mode == 2)
+        {
+            acc = -1;
+        }
+        else
+        {
+            acc = courseMap.size()/term_count;
+        }
+        term* tm = new term(i + 1,max_point, acc);
+        p->add_term(tm);
+    }
+    list<course*> arrangedList;
+
+    course* target = GetNextAddable(arrangedList, courseMap);
+    list<term*>::iterator it = p->GetTerms()->begin();
+    list<term*>::iterator end = p->GetTerms()->end();
+
+    while(target != NULL)//All courses are arranged or some situation can't be fulfilled will terminate the loop
+    {
+        if(arrangeCourse(target, end, it))
+        {
+            arrangedList.push_back(target);
+            target = GetNextAddable(arrangedList, courseMap);
+        }
+        else
+        {
+            cout << "A course can't be added, course:" << target->get_id() << endl;
+            delete p;
+            return false;
+        }
+    }
+    if(arrangedList.size() != courseMap.size())
+    {
+        cout << "Some courses can't be arranged." << endl;
+        cout << "Please find out not arranged courses, and reconsider you plan." << endl;
+        p->print();
+        delete p;
+
+        return false;
+    }
+    else
+    {
+        cout << "Good job! Successfully arranged all courses." << endl;
+        p->print();
+        delete p;
+    }
+    return true;
 }
 
 void loadtestparam()
