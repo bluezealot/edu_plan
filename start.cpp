@@ -89,6 +89,7 @@ class term
 
     bool add_course(course* one)
     {
+        //TODO add the false condition
         courses.push_back(one);
         points += one->get_points();
         return true;
@@ -156,19 +157,55 @@ bool doplan(int term_count, int max_point, int mode, map<string, course*> course
         p.add_term(tm);
     }
     list<course*> arrangedList;
-    
-    for(term* aTerm:p.GetTerms())
+
+    course* target = GetNextAddable(arrangedList, courseMap);
+    list<term*>::iterator it = p.GetTerms().begin();
+
+    while(target != NULL)//All courses are arranged or some situation can't be fulfilled will terminate the loop
     {
-        term* currentTerm = aTerm;
-        for (auto const& [key, val] : courseMap)
+        if(arrangeCourse(target, p.GetTerms(), it))
         {
-            if(val->get_pre_count() == 0)
-            {
-                
-            }
+            arrangedList.push_back(target);
+            target = GetNextAddable(arrangedList, courseMap);
+        }
+        else
+        {
+            cout << "A course can't be added, course:" << target->get_id() << endl;
+            return false;
         }
     }
+    if(arrangedList.size() != courseMap.size())
+    {
+        cout << "Some courses can't be arranged, detai:" << endl;
+        //TODO print out every thing. 
+        return false;
+    }
+    else
+    {
+        // TODO print out the plan
+    }
     return true;
+}
+
+bool arrangeCourse(course* aCourse, list<term*> terms, list<term*>::iterator it)
+{
+    term* currentTerm = *it;
+    if(!currentTerm->add_course(aCourse))
+    {
+        it ++;
+        if(it != terms.end())
+        {
+            return arrangeCourse(aCourse, terms, it);
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return true;
+    }
 }
 
 bool IsArranged(list<course*> arrangedList, list<course*> testTarget)
