@@ -121,6 +121,8 @@ class plan
     {
         return terms;
     }
+
+    //TODO print out the plan.
 };
 
 // for string delimiter
